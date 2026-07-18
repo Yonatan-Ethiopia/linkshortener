@@ -2,6 +2,7 @@ from starlette.requests import Request
 from sqlmodel import SQLModel, Session, select
 from typing import Annotated
 from fastapi import Depends, HTTPException, status
+from urllib.parse import urlparse
 from .db import engine
 from .models import *
 
@@ -14,12 +15,24 @@ def get_current_user(request: Request, session: Annotated[Session, Depends(get_s
     status_code = status.HTTP_401_UNAUTHORIZED,
     detail = "Authorization error"
     )
-    user_id = request.session['user_id']
-    if user_id is None:
+    try:
+        user_id = request.session['user_id']
+        if user_id is None:
+            raise unauthorized
+        user = session.get(userDb, user_id)
+        if user is None:
+            raise unauthorized
+        print("The user is ", user)
+        return user
+    except Exception as e:
         raise unauthorized
-    user = session.get(userDb, user_id)
-    if user is None:
-        raise unauthorized
-    print("The user is ", user)
-    return user
+
+def normalize_url(url: str) -> str:
+    parsed = urlparse(url)
+    if not parsed.scheme:
+        url = "https://" + url
+        parsed = urlparse(url)
+    if parsed.scheme not in ("http", "https") or not parsed.netloc:
+        raise HTTPException(status_code=400, detail="Invalid URL")
+    return url
     

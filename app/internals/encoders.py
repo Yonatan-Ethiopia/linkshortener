@@ -18,5 +18,7 @@ def decode_from_base62( short_string: str):
     char_map = {char: i for i, char in enumerate(chars)}
     num = 0
     for char in short_string:
+        if char not in char_map:
+            return None
         num = num * 62 + char_map[char]
     return num

@@ -3,7 +3,7 @@ from fastapi.responses import RedirectResponse
 from sqlmodel import SQLModel, create_engine, select, Field, Session, text
 from typing import Annotated
 
-from ..dependencies import get_session, get_current_user
+from ..dependencies import get_session, get_current_user, normalize_url
 from ..internals.encoders import encode_to_base62, decode_from_base62
 from ..models import *
 router = APIRouter()
@@ -19,7 +19,9 @@ def add_users( user: userReq , session: Annotated[Session, Depends(get_session)]
 @router.post("/create", response_model = UrlRes)
 def create_link( curr_user: Annotated[currUser, Depends(get_current_user)], url: UrlReq, session: Annotated[Session, Depends(get_session)]):
     full_url = url.fullurl
-    if True:
+    full_url = normalize_url(full_url)
+    if full_url is not None:
+        url.fullurl = full_url
         print("Adding url")
         user_id_dict = {"user_id": curr_user.id}
         db_data = UrlDb.model_validate(url)
@@ -47,9 +49,11 @@ def redirect_to_full_url( shortened_link: str, session: Annotated[Session, Depen
     url_id = decode_from_base62(shortened_link)
     if url_id is None:
         raise HTTPException(status_code = 404, detail="not found")
-    full_url = session.get(UrlDb, url_id).first()
+
+    full_url = session.get(UrlDb, url_id)
     if full_url is None:
         raise HTTPException(status_code = 404, detail="Link not found")
+
     print("YOur redirect url is: ", full_url.fullurl)
     return full_url.fullurl
     
@@ -68,7 +72,7 @@ def delete_link( url_id: str , session: Annotated[Session, Depends(get_session)]
     url_data = session.get(UrlDb, url_id)
     if url_data is None:
         raise HTTPException(status_code = 404, detail="Link not found")
-    if usl_data.user_id != curr_user.id:
+    if url_data.user_id != curr_user.id:
         raise HTTPException(status_code = 404, detail="Link not found") 
     session.delete(url_data)
     session.commit()

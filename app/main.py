@@ -2,6 +2,7 @@ from fastapi import FastAPI, Depends
 from fastapi.responses import RedirectResponse
 from sqlmodel import SQLModel, select, Session
 from typing import Annotated
+import json
 
 from .routers import routers
 from . import models
@@ -21,7 +22,8 @@ import os
 def create_db_and_tables():
     SQLModel.metadata.create_all(engine)
 
-secretkey = os.getenv("SECRET_KEY", "SECRET_KEY!")
+secretkey = os.getenv("SECRET_KEY", "")
+
 app = FastAPI()
 
 app.add_middleware(SessionMiddleware, secret_key=secretkey)
@@ -47,8 +49,8 @@ def initdb():
     
 @app.get('/')
 async def homepage(request: Request):
-    user = request.session.get('user')
-    
+    user = request.session.get('user_id')
+    print(user)
     if user:
         data = json.dumps(user)
         html = (
@@ -56,6 +58,8 @@ async def homepage(request: Request):
             '<a href="/logout">logout</a>'
         )
         return HTMLResponse(html)
+        print(user)
+        return RedirectResponse(url='/dashboard')
     return HTMLResponse('<a href="/login">login</a>')
 
 
@@ -90,7 +94,7 @@ async def auth(request: Request, sess: Annotated[Session, Depends(get_session)])
 
 @app.get('/logout')
 async def logout(request: Request):
-    request.session.pop('user', None)
+    request.session.pop('user_id', None)
     return RedirectResponse(url='/')
     
 
