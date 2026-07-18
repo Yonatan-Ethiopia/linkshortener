@@ -1,4 +1,8 @@
-from sqlmodel import SQLModel, session, select
+from sqlmodel import SQLModel, Session, select
+from typing import Annotated
+from fastapi import Depends
+from .db import engine
+from .models import *
 
 def get_session():
     with Session(engine) as session:

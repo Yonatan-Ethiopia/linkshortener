@@ -1,3 +1,5 @@
+from sqlmodel import SQLModel, Field
+
 class UrlBase(SQLModel):
     fullurl: str
     

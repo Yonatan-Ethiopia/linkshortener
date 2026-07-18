@@ -1,10 +1,11 @@
 from fastapi import APIRouter, Depends, Query, HTTPException
 from fastapi.responses import RedirectResponse
 from sqlmodel import SQLModel, create_engine, select, Field, Session, text
+from typing import Annotated
 
 from ..dependencies import get_session, get_current_user
 from ..internals.encoders import encode_to_base62, decode_from_base62
-
+from ..models import *
 router = APIRouter()
 
 @router.post("/adduser")
