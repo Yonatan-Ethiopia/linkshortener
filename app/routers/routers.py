@@ -64,10 +64,12 @@ def user_dashboard( session: Annotated[Session, Depends(get_session)], curr_user
     return userResList.model_validate( curr_user, update = urls_dict)
     
 @router.delete("/delete/{url_id}")
-def delete_link( url_id: str , session: Annotated[Session, Depends(get_session)]):
+def delete_link( url_id: str , session: Annotated[Session, Depends(get_session)], curr_user: Annotated[currUser, Depends(get_current_user)]):
     url_data = session.get(UrlDb, url_id)
     if url_data is None:
         raise HTTPException(status_code = 404, detail="Link not found")
+    if usl_data.user_id != curr_user.id:
+        raise HTTPException(status_code = 404, detail="Link not found") 
     session.delete(url_data)
     session.commit()
     return { "status_code":200, "Message": "Successfully deleted"}

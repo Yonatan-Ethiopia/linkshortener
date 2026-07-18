@@ -23,6 +23,7 @@ class currUser(userBase):
     
 class userDb(userBase, table = True):
     id: int | None = Field( default = None, primary_key = True )
+    google_sub: str = Field( unique = True, index = True)
 
 class userRes(userBase):
     pass    
