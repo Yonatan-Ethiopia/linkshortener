@@ -17,6 +17,9 @@ from starlette.responses import HTMLResponse, RedirectResponse
 from authlib.integrations.starlette_client import OAuth, OAuthError
 
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 def create_db_and_tables():
@@ -43,9 +46,7 @@ oauth.register(
 )
 
 app.include_router(routers.router)        
-@app.on_event("startup")
-def initdb():
-    create_db_and_tables()
+
     
 @app.get('/')
 async def homepage(request: Request):
