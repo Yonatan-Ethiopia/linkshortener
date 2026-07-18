@@ -47,11 +47,11 @@ def redirect_to_full_url( shortened_link: str, session: Annotated[Session, Depen
     url_id = decode_from_base62(shortened_link)
     if url_id is None:
         raise HTTPException(status_code = 404, detail="not found")
-    full_url = session.get(UrlDb, url_id).fullurl
+    full_url = session.get(UrlDb, url_id).first()
     if full_url is None:
         raise HTTPException(status_code = 404, detail="Link not found")
-    print("YOur redirect url is: ", full_url)
-    return full_url
+    print("YOur redirect url is: ", full_url.fullurl)
+    return full_url.fullurl
     
 @router.get("/dashboard")
 def user_dashboard( session: Annotated[Session, Depends(get_session)], curr_user: Annotated[currUser, Depends(get_current_user)], offset: Annotated[int | None, Query()] = 0, ):

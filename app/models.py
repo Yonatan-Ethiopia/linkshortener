@@ -36,4 +36,3 @@ class userReq(userBase):
 class userUpdate(SQLModel):
     name : str | None = None
     email: str | None = None
-    username: str | None = None
