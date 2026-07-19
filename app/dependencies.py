@@ -5,6 +5,9 @@ from fastapi import Depends, HTTPException, status
 from urllib.parse import urlparse
 from .db import engine
 from .models import *
+import redis,os
+from dotenv import load_dotenv
+from .db import redis_client
 
 def get_session():
     with Session(engine) as session:
@@ -35,4 +38,27 @@ def normalize_url(url: str) -> str:
     if parsed.scheme not in ("http", "https") or not parsed.netloc:
         raise HTTPException(status_code=400, detail="Invalid URL")
     return url
+
+def create_rate_limit( request: Request ):
+    user_id = request.session["user_id"]
+    if user_id is None:
+        return False
+    key = f"ratelimit:user:{user_id}:/create"
+    print(f"{user_id} wants to make create a link")
+    return rate_limit(key, limit = 5, window_size = 60)
+    
+def auth_rate_limit( request: Request )-> bool:
+    ip = request.client.host
+    if ip is None:
+        return False
+    key = f"ratelimit:ip:{ip}:/auth"
+    return rate_limit(key, limit = 5, window_size = 60)
+
+    
+def rate_limit(key: str, limit: int, window_size: int)-> bool:
+    current = redis_client.incr(key)
+    if current == 1:
+        redis_client.expire(key, window_size)
+    print(f"{key} is at their {current} th request")
+    return current < limit
     

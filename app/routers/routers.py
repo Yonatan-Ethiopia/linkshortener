@@ -3,7 +3,7 @@ from fastapi.responses import RedirectResponse
 from sqlmodel import SQLModel, create_engine, select, Field, Session, text
 from typing import Annotated
 
-from ..dependencies import get_session, get_current_user, normalize_url
+from ..dependencies import get_session, get_current_user, normalize_url, auth_rate_limit, create_rate_limit
 from ..internals.encoders import encode_to_base62, decode_from_base62
 from ..models import *
 router = APIRouter()
@@ -17,7 +17,9 @@ def add_users( user: userReq , session: Annotated[Session, Depends(get_session)]
     return user_db
     
 @router.post("/create", response_model = UrlRes)
-def create_link( curr_user: Annotated[currUser, Depends(get_current_user)], url: UrlReq, session: Annotated[Session, Depends(get_session)]):
+def create_link( curr_user: Annotated[currUser, Depends(get_current_user)], url: UrlReq, session: Annotated[Session, Depends(get_session)], is_allowed: Annotated[bool, Depends(create_rate_limit)]):
+    if not is_allowed:
+        raise HTTPException(status_code = 429, detail = "Too many requests")
     full_url = url.fullurl
     full_url = normalize_url(full_url)
     if full_url is not None:

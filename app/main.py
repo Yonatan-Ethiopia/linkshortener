@@ -8,7 +8,7 @@ from .routers import routers
 from . import models
 from .models import userDb
 from .db import engine
-from .dependencies import get_session
+from .dependencies import get_session, auth_rate_limit
 
 from starlette.config import Config
 from starlette.requests import Request
@@ -71,7 +71,9 @@ async def login(request: Request):
 
 
 @app.get('/auth')
-async def auth(request: Request, sess: Annotated[Session, Depends(get_session)]):
+async def auth(request: Request, sess: Annotated[Session, Depends(get_session)], is_allowed: Annotated[bool, Depends(auth_rate_limit)]):
+    if not is_allowed:
+        raise HTTPException(status_code = 429, detail = "Too many requests")
     try:
         token = await oauth.google.authorize_access_token(request)
     except OAuthError as error:
