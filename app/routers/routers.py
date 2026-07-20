@@ -61,7 +61,7 @@ def redirect_to_full_url( shortened_link: str, session: Annotated[Session, Depen
     
 @router.get("/dashboard")
 def user_dashboard( session: Annotated[Session, Depends(get_session)], curr_user: Annotated[currUser, Depends(get_current_user)], offset: Annotated[int | None, Query()] = 0, ):
-    url_db = session.exec(select(UrlDb).where(UrlDb.user_id == curr_user.id).offset(0).limit(5)).all()
+    url_db = session.exec(select(UrlDb).where(UrlDb.user_id == curr_user.id).offset(offset).limit(5)).all()
     url_data = []
     for url in url_db:
         url_data.append(UrlRes.model_validate(url))
