@@ -29,7 +29,7 @@ secretkey = os.getenv("SECRET_KEY", "")
 
 app = FastAPI()
 
-app.add_middleware(SessionMiddleware, secret_key=secretkey, same_site="lax")
+app.add_middleware(SessionMiddleware, secret_key=secretkey, https_only=True, same_site="lax")
 
 config = Config('.env')
 print("CLIENT ID LOADED:", config('GOOGLE_CLIENT_ID'))

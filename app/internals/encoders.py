@@ -1,7 +1,13 @@
 import string
+import os
+from dotenv import load_dotenv
 
+load_dotenv()
+
+xor_mask = os.getenv("SHORTLINK_XOR_MASK", "")
 
 def encode_to_base62( number: int):
+    number ^= XOR_MASK
     chars = string.digits + string.ascii_letters
     if number == 0:
         return chars[0]
@@ -21,4 +27,4 @@ def decode_from_base62( short_string: str):
         if char not in char_map:
             return None
         num = num * 62 + char_map[char]
-    return num
+    return num ^ XOR_MASK
