@@ -20,11 +20,16 @@ def encode_to_base62( number: int):
     return "".join(reversed(base62))
     
 def decode_from_base62( short_string: str):
-    chars = string.digits + string.ascii_letters
-    char_map = {char: i for i, char in enumerate(chars)}
-    num = 0
-    for char in short_string:
-        if char not in char_map:
-            return None
-        num = num * 62 + char_map[char]
-    return num ^ int(xor_mask)
+    try:
+        chars = string.digits + string.ascii_letters
+        char_map = {char: i for i, char in enumerate(chars)}
+        num = 0
+        for char in short_string:
+            if char not in char_map:
+                return None
+            num = num * 62 + char_map[char]
+        return num ^ int(xor_mask)
+    except Exception as e:
+        print(e)
+        return None
+    
