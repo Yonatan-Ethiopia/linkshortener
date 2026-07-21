@@ -38,7 +38,7 @@ app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 
 templates = Jinja2Templates(directory=BASE_DIR / "routers/templates")
 
-app.add_middleware(SessionMiddleware, secret_key=secretkey, same_site="lax")
+app.add_middleware(SessionMiddleware,https_only=True, secret_key=secretkey, same_site="lax")
 
 config = Config('.env')
 print("CLIENT ID LOADED:", config('GOOGLE_CLIENT_ID'))
