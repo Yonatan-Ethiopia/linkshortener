@@ -52,6 +52,10 @@ def create_link(request:Request,  curr_user: Annotated[currUser, Depends(get_cur
 @router.get("/url/{shortened_link}", response_class = RedirectResponse)
 def redirect_to_full_url( shortened_link: str, session: Annotated[Session, Depends(get_session)]):
     url_id = decode_from_base62(shortened_link)
+    if url_id > MAX_INT32 or url_id < 1:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="URL not found"
+        )
     if url_id is None:
         raise HTTPException(status_code = 404, detail="not found")
 
