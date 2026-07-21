@@ -74,8 +74,10 @@ def user_dashboard( request: Request, session: Annotated[Session, Depends(get_se
         url_data.append(UrlRes.model_validate(url))
     urls_dict = { "urls": url_data }
     print("IN dashboard")
-    return templates.TemplateResponse("dashboard.html", {
-        "request": request,
+    return templates.TemplateResponse(
+    request=request,
+    name="dashboard.html",
+    context={
         "curr_user": curr_user,
         "urls": url_db,
         "offset": offset,
@@ -83,7 +85,8 @@ def user_dashboard( request: Request, session: Annotated[Session, Depends(get_se
         "total_count": total_count,
         "current_page": offset // limit + 1,
         "total_pages": max(1, -(-total_count // limit)),
-    })
+    },
+)
     
 @router.delete("/delete/{url_id}")
 def delete_link( url_id: int , session: Annotated[Session, Depends(get_session)], curr_user: Annotated[currUser, Depends(get_current_user)]):
