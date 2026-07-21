@@ -61,11 +61,14 @@ app.include_router(routers.router)
 async def homepage(request: Request, dbsession: Annotated[Session, Depends(get_session)]):
     userid = request.session.get('user_id')
     curr_user = dbsession.get(userDb, userid) if userid else None
-    return templates.TemplateResponse("landing.html", {
-        "request": request,
+    return templates.TemplateResponse(
+    request=request,
+    name="landing.html",
+    context={
         "curr_user": curr_user,
-        "current_year": datetime.now().year,
-    })
+        "current_year": 2026,
+    }
+)
 
 @app.get('/login')
 async def login(request: Request):
