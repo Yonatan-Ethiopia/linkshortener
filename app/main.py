@@ -2,11 +2,13 @@ from fastapi import FastAPI, Depends
 from fastapi.responses import RedirectResponse
 from sqlmodel import SQLModel, select, Session
 from typing import Annotated
+from fastapi.staticfiles import StaticFiles
 import json
+from datetime import datetime, timezone
 
 from .routers import routers
 from . import models
-from .models import userDb
+from .models import userDb, userRes
 from .db import engine
 from .dependencies import get_session, auth_rate_limit
 
@@ -15,9 +17,11 @@ from starlette.requests import Request
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.responses import HTMLResponse, RedirectResponse
 from authlib.integrations.starlette_client import OAuth, OAuthError
+from fastapi.templating import Jinja2Templates
 
 import os
 from dotenv import load_dotenv
+from pathlib import Path
 
 load_dotenv()
 
@@ -26,10 +30,15 @@ def create_db_and_tables():
     SQLModel.metadata.create_all(engine)
 
 secretkey = os.getenv("SECRET_KEY", "")
+BASE_DIR = Path(__file__).resolve().parent
 
 app = FastAPI()
 
-app.add_middleware(SessionMiddleware, secret_key=secretkey, https_only=True, same_site="lax")
+app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
+
+templates = Jinja2Templates(directory=BASE_DIR / "routers/templates")
+
+app.add_middleware(SessionMiddleware, secret_key=secretkey, same_site="lax")
 
 config = Config('.env')
 print("CLIENT ID LOADED:", config('GOOGLE_CLIENT_ID'))
@@ -49,20 +58,14 @@ app.include_router(routers.router)
 
     
 @app.get('/')
-async def homepage(request: Request):
-    user = request.session.get('user_id')
-    print(user)
-    if user:
-        data = json.dumps(user)
-        html = (
-            f'<pre>{data}</pre>'
-            '<a href="/logout">logout</a>'
-        )
-        return HTMLResponse(html)
-        print(user)
-        return RedirectResponse(url='/dashboard')
-    return HTMLResponse('<a href="/login">login</a>')
-
+async def homepage(request: Request, dbsession: Annotated[Session, Depends(get_session)]):
+    userid = request.session.get('user_id')
+    curr_user = dbsession.get(userDb, userid) if userid else None
+    return templates.TemplateResponse("landing.html", {
+        "request": request,
+        "curr_user": curr_user,
+        "current_year": datetime.now().year,
+    })
 
 @app.get('/login')
 async def login(request: Request):

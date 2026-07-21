@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}LinkFlow{% endblock %}
+
+{% block body %}
+<div class="landing-shell">
+
+  {% if curr_user %}
+  <div class="landing-topbar">
+    <a href="/logout" id="logout-link" class="btn btn-pill btn-outline">Log out</a>
+  </div>
+  {% endif %}
+
+  <div class="landing-center">
+    <h1 class="landing-brand">TNYLINKS</h1>
+
+    {% if curr_user %}
+      <p class="landing-tagline">Welcome back, <span class="accent-text">{{ curr_user.name }}</span>.</p>
+
+      <div class="landing-actions">
+        <button type="button" class="btn btn-pill btn-accent btn-block" onclick="openModal('create-link-modal')">
+          Create Link
+        </button>
+        <a href="/dashboard" class="btn btn-pill btn-outline btn-block">Go to Dashboard</a>
+      </div>
+    {% else %}
+      <p class="landing-tagline">
+        Make your URLs <span class="accent-text">tiny</span>. <span class="accent-text">Simplify</span> your links.
+      </p>
+
+      <a href="/login" class="btn btn-pill btn-accent google-btn">
+        <span class="google-badge">
+          <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
+            <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/>
+            <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/>
+            <path fill="#FBBC05" d="M3.964 10.706A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.706V4.962H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.038l3.007-2.332z"/>
+            <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.962L3.964 7.294C4.672 5.167 6.656 3.58 9 3.58z"/>
+          </svg>
+        </span>
+        Sign in with Google
+      </a>
+      <p class="landing-subtext">To manage your links and access your personal dashboard.</p>
+    {% endif %}
+  </div>
+
+  <div class="landing-footer"><span>tnylinks &copy; {{ current_year }}. All rights reserved.</span>
+  </div>
+</div>
+
+{% if curr_user %}
+  {% include "partials/create_link_modal.html" %}
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{% if curr_user %}
+<script>
+  var logoutLink = document.getElementById('logout-link');
+  if (logoutLink) {
+    logoutLink.addEventListener('click', function (e) {
+      e.preventDefault();
+      document.getElementById('confirm-modal-text').textContent = 'Are you sure you want to log out?';
+      document.getElementById('confirm-modal-yes').textContent = 'Log out';
+      pendingConfirm = function () { window.location.href = '/logout'; };
+      openModal('confirm-modal');
+    });
+  }
+</script>
+{% endif %}
+{% endblock %}

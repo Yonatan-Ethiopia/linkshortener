@@ -1,12 +1,20 @@
-from fastapi import APIRouter, Depends, Query, HTTPException
-from fastapi.responses import RedirectResponse
-from sqlmodel import SQLModel, create_engine, select, Field, Session, text
+from fastapi import APIRouter, Depends, Query, HTTPException, Request, Response
+from fastapi.responses import RedirectResponse, HTMLResponse
+from sqlmodel import SQLModel, create_engine, select, Field, Session, text, func
 from typing import Annotated
+from fastapi.templating import Jinja2Templates
+
 
 from ..dependencies import get_session, get_current_user, normalize_url, auth_rate_limit, create_rate_limit
 from ..internals.encoders import encode_to_base62, decode_from_base62
 from ..models import *
+
+from pathlib import Path
+
 router = APIRouter()
+
+BASE_DIR = Path(__file__).resolve().parent
+templates = Jinja2Templates(directory=BASE_DIR / "templates")
 
 @router.post("/adduser")
 def add_users( user: userReq , session: Annotated[Session, Depends(get_session)]):
@@ -17,31 +25,26 @@ def add_users( user: userReq , session: Annotated[Session, Depends(get_session)]
     return user_db
     
 @router.post("/create", response_model = UrlRes)
-def create_link( curr_user: Annotated[currUser, Depends(get_current_user)], url: UrlReq, session: Annotated[Session, Depends(get_session)], is_allowed: Annotated[bool, Depends(create_rate_limit)]):
+def create_link(request:Request,  curr_user: Annotated[currUser, Depends(get_current_user)], url: UrlReqCreate, session: Annotated[Session, Depends(get_session)], is_allowed: Annotated[bool, Depends(create_rate_limit)]):
     if not is_allowed:
         raise HTTPException(status_code = 429, detail = "Too many requests")
     full_url = url.fullurl
     full_url = normalize_url(full_url)
     if full_url is not None:
         url.fullurl = full_url
-        print("Adding url")
         user_id_dict = {"user_id": curr_user.id}
-        db_data = UrlDb.model_validate(url)
-        print("Current url data ", db_data)
+        db_data = UrlDb.model_validate(url, update=user_id_dict)
         session.add(db_data)
         session.commit()
-        print("Data commited")
         session.refresh(db_data)
-        print("Data refreshed ", db_data)
         shortened_url = encode_to_base62(db_data.id)
         url_dict = { "shorturl": shortened_url }
         db_data.sqlmodel_update(url_dict)
-        print("Data updated with url", db_data)
         session.add(db_data)
         session.commit()
-        print("New data commited")
         session.refresh(db_data)
-        print("Data refreshed ", db_data)
+        if request.headers.get("hx-request"):
+            return Response(status_code=200, headers={"HX-Redirect": "/dashboard"})
         return UrlRes.model_validate(db_data)
     else:
         raise HTTPException( status_code = 400, detail = "Link not supported or is invalid")
@@ -56,21 +59,34 @@ def redirect_to_full_url( shortened_link: str, session: Annotated[Session, Depen
     if full_url is None:
         raise HTTPException(status_code = 404, detail="Link not found")
 
-    print("YOur redirect url is: ", full_url.fullurl)
+    print("Your redirect url is: ", full_url.fullurl)
     return full_url.fullurl
     
-@router.get("/dashboard")
-def user_dashboard( session: Annotated[Session, Depends(get_session)], curr_user: Annotated[currUser, Depends(get_current_user)], offset: Annotated[int | None, Query()] = 0, ):
-    url_db = session.exec(select(UrlDb).where(UrlDb.user_id == curr_user.id).offset(offset).limit(5)).all()
+@router.get("/dashboard", response_class=HTMLResponse)
+def user_dashboard( request: Request, session: Annotated[Session, Depends(get_session)], curr_user: Annotated[currUser, Depends(get_current_user)], offset: Annotated[int | None, Query()] = 0, ):
+    limit = 5
+    url_db = session.exec(select(UrlDb).where(UrlDb.user_id == curr_user.id).order_by(UrlDb.id.desc()).offset(offset).limit(5)).all()
+    total_count = session.exec(
+        select(func.count()).select_from(UrlDb).where(UrlDb.user_id == curr_user.id)
+    ).one()
     url_data = []
     for url in url_db:
         url_data.append(UrlRes.model_validate(url))
     urls_dict = { "urls": url_data }
     print("IN dashboard")
-    return userResList.model_validate( curr_user, update = urls_dict)
+    return templates.TemplateResponse("dashboard.html", {
+        "request": request,
+        "curr_user": curr_user,
+        "urls": url_db,
+        "offset": offset,
+        "limit": limit,
+        "total_count": total_count,
+        "current_page": offset // limit + 1,
+        "total_pages": max(1, -(-total_count // limit)),
+    })
     
 @router.delete("/delete/{url_id}")
-def delete_link( url_id: str , session: Annotated[Session, Depends(get_session)], curr_user: Annotated[currUser, Depends(get_current_user)]):
+def delete_link( url_id: int , session: Annotated[Session, Depends(get_session)], curr_user: Annotated[currUser, Depends(get_current_user)]):
     url_data = session.get(UrlDb, url_id)
     if url_data is None:
         raise HTTPException(status_code = 404, detail="Link not found")
@@ -78,10 +94,10 @@ def delete_link( url_id: str , session: Annotated[Session, Depends(get_session)]
         raise HTTPException(status_code = 404, detail="Link not found") 
     session.delete(url_data)
     session.commit()
-    return { "status_code":200, "Message": "Successfully deleted"}
+    return Response(status_code=200)
     
 @router.patch("/update")
-def update_user(userUpd: userUpdate, curr_user: Annotated[currUser, Depends(get_current_user)], session: Annotated[Session, Depends(get_session)]):
+def update_user(response: Response, userUpd: userUpdate, curr_user: Annotated[currUser, Depends(get_current_user)], session: Annotated[Session, Depends(get_session)]):
     user_data = session.get(userDb, curr_user.id)
     if user_data is None:
         raise HTTPException(status_code = 404, detail = "User not found")
@@ -90,4 +106,5 @@ def update_user(userUpd: userUpdate, curr_user: Annotated[currUser, Depends(get_
     session.add(user_data)
     session.commit()
     session.refresh(user_data)
-    return userRes.model_validate(user_data)
+    response.headers["HX-Refresh"] = "true"
+    return ""

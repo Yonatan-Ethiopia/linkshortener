@@ -1,0 +1,26 @@
+<tr id="url-{{ url.id }}">
+  <td class="cell-date">
+    {{ url.created_at.strftime('%b %d, %Y') if url.created_at is defined and url.created_at else '—' }}
+  </td>
+  <td class="cell-url" title="{{ url.fullurl }}">{{ url.fullurl }}</td>
+  <td class="cell-short">
+    <span>{{ request.base_url }}url/{{ url.shorturl }}</span>
+    <button type="button"
+            class="icon-btn"
+            title="Copy"
+            onclick="copyToClipboard('{{ request.base_url }}url/{{ url.shorturl }}', this)">
+      &#10697;
+    </button>
+  </td>
+  <td class="cell-actions">
+    <button class="btn btn-pill btn-danger"
+        hx-delete="/delete/{{ url.id }}"
+        hx-target="#url-{{ url.id }}"
+        hx-swap="outerHTML"
+        hx-confirm="Delete this link? This can't be undone."
+        hx-disabled-elt="this">
+  <span>Delete</span>
+  <span class="htmx-indicator spinner"></span>
+</button>
+  </td>
+</tr>

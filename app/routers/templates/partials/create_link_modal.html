@@ -1,0 +1,16 @@
+<div id="create-link-modal" class="modal-overlay hidden">
+  <div class="modal-card">
+    <h2>Shorten New Link</h2>
+    <form hx-post="/create" hx-target="this" hx-swap="none" hx-disabled-elt="find button">
+      <label for="fullurl">Enter Long URL...</label>
+      <input type="url" id="fullurl" name="fullurl" placeholder="https://example.com/very-long-url..." required>
+      <button type="submit" class="btn btn-accent btn-pill btn-block">
+        <span>Shorten URL</span>
+        <span class="htmx-indicator spinner"></span>
+      </button>
+      <div class="modal-cancel">
+        <button type="button" class="btn-link" onclick="closeModal('create-link-modal')">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>

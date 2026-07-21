@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}LinkFlow{% endblock %}</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Press+Start+2P&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', path='/style.css') }}">
+
+  <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+  <script src="https://unpkg.com/htmx.org@1.9.12/dist/ext/json-enc.js"></script>
+
+  {% block head %}{% endblock %}
+</head>
+<body hx-ext="json-enc">
+  {% block body %}{% endblock %}
+
+  <!-- Single Reusable Confirmation Modal -->
+  <div id="confirm-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <h2>Are you sure?</h2>
+      <p id="confirm-modal-text" class="modal-text"></p>
+      <button type="button" id="confirm-modal-yes" class="btn btn-danger btn-pill btn-block">Confirm</button>
+      <div class="modal-cancel">
+        <button type="button" id="confirm-modal-no" class="btn-link">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function openModal(id) {
+      document.getElementById(id).classList.remove('hidden');
+    }
+    function closeModal(id) {
+      document.getElementById(id).classList.add('hidden');
+    }
+    
+    let pendingConfirm = null;
+
+    // HTMX Confirmation Handling
+    document.body.addEventListener('htmx:confirm', function (evt) {
+      if (!evt.target.hasAttribute('hx-confirm')) return;
+      evt.preventDefault();
+      document.getElementById('confirm-modal-text').textContent = evt.detail.question;
+      document.getElementById('confirm-modal-yes').textContent = 'Confirm';
+      pendingConfirm = evt.detail.issueRequest;
+      openModal('confirm-modal');
+    });
+
+    // Confirm button click
+    document.getElementById('confirm-modal-yes').addEventListener('click', function () {
+      closeModal('confirm-modal');
+      if (pendingConfirm) pendingConfirm(true);
+      pendingConfirm = null;
+    });
+
+    // Cancel button click
+    document.getElementById('confirm-modal-no').addEventListener('click', function () {
+      closeModal('confirm-modal');
+      pendingConfirm = null;
+    });
+
+    // Click outside modal card to close
+    document.addEventListener('click', function (e) {
+      if (e.target.classList.contains('modal-overlay')) {
+        e.target.classList.add('hidden');
+        pendingConfirm = null;
+      }
+    });
+
+    // Escape key closes open modals
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') {
+        document.querySelectorAll('.modal-overlay:not(.hidden)').forEach(function (m) {
+          m.classList.add('hidden');
+        });
+        pendingConfirm = null;
+      }
+    });
+
+    function copyToClipboard(text, btn) {
+      navigator.clipboard.writeText(text).then(function () {
+        var original = btn.innerHTML;
+        btn.innerHTML = '✓';
+        setTimeout(function () { btn.innerHTML = original; }, 1200);
+      });
+    }
+  </script>
+
+  {% block scripts %}{% endblock %}
+</body>
+</html>

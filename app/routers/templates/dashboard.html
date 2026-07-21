@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard · LinkFlow{% endblock %}
+
+{% block body %}
+<header class="topbar">
+    <a href="/" style="text-decoration: none; color: inherit;">
+  <div class="brand">TNYLINKS</div>
+  </a>
+  <div class="profile-widget">
+    <div class="avatar">
+      {{ (curr_user.name.split() | map('first') | join('') | upper)[:2] }}
+    </div>
+    <div class="profile-info">
+      <span class="profile-name">{{ curr_user.name }}</span>
+      <span class="profile-email">{{ curr_user.email }}</span>
+    </div>
+    <button type="button" class="btn btn-pill btn-outline" onclick="openModal('edit-profile-modal')">
+      Edit Profile
+    </button>
+  </div>
+</header>
+
+<main class="dashboard-shell">
+  <div class="dashboard-card">
+    <div class="dashboard-toolbar">
+      <button type="button" class="btn btn-pill btn-accent" onclick="openModal('create-link-modal')">
+        + Create New Link
+      </button>
+    </div>
+    <div class="table-scroll">
+    <table class="url-table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Original URL</th>
+          <th>Short URL</th>
+          <th class="cell-actions">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="url-table-body">
+        {% if urls %}
+          {% for url in urls %}
+            {% include "partials/url_row.html" %}
+          {% endfor %}
+        {% else %}
+          <tr class="empty-row">
+            <td colspan="5">No links yet - create your first one above.</td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
+    </div>
+    <div class="pagination">
+      {% if offset > 0 %}
+        <a class="btn btn-pill btn-ghost" href="/dashboard?offset={{ offset - limit }}">&larr; Previous</a>
+      {% else %}
+        <span class="btn btn-pill btn-ghost btn-disabled">&larr; Previous</span>
+      {% endif %}
+
+      <span class="page-indicator">Page {{ current_page }} of {{ total_pages }}</span>
+
+      {% if offset + limit < total_count %}
+        <a class="btn btn-pill btn-ghost" href="/dashboard?offset={{ offset + limit }}">Next &rarr;</a>
+      {% else %}
+        <span class="btn btn-pill btn-ghost btn-disabled">Next &rarr;</span>
+      {% endif %}
+    </div>
+  </div>
+</main>
+
+<!-- Create Link modal -->
+{% include "partials/create_link_modal.html" %}
+
+<!-- Edit Profile modal -->
+<div id="edit-profile-modal" class="modal-overlay hidden">
+  <div class="modal-card">
+    <h2>Edit Profile</h2>
+    <form hx-patch="/update" hx-target="this" hx-swap="none" hx-disabled-elt="find button">
+      <label for="name">Name</label>
+      <input type="text" id="name" name="name" value="{{ curr_user.name }}">
+      <label for="email">Email</label>
+      <input type="email" id="email" name="email" value="{{ curr_user.email }}">
+      <button type="submit" class="btn btn-accent btn-pill btn-block">Save Changes</button>
+      <div class="modal-cancel">
+        <button type="button" class="btn-link" onclick="closeModal('edit-profile-modal')">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

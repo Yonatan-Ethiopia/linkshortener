@@ -13,6 +13,9 @@ class UrlDb(UrlBase, table = True):
 class UrlReq(UrlBase):
     user_id: int
     
+class UrlReqCreate(UrlBase):
+    pass
+    
 class UrlRes(UrlBase):
     shorturl : str | None
     id: int
