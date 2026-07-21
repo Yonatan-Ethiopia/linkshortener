@@ -11,6 +11,8 @@ from ..models import *
 
 from pathlib import Path
 
+MAX_INT32 = 2_147_483_647
+
 router = APIRouter()
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -54,7 +56,7 @@ def redirect_to_full_url( shortened_link: str, session: Annotated[Session, Depen
     url_id = decode_from_base62(shortened_link)
     if url_id > MAX_INT32 or url_id < 1:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="URL not found"
+            status_code=404, detail="URL not found"
         )
     if url_id is None:
         raise HTTPException(status_code = 404, detail="not found")
