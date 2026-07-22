@@ -4,13 +4,29 @@
   </td>
   <td class="cell-url" title="{{ url.fullurl }}">{{ url.fullurl }}</td>
   <td class="cell-short">
-    <span>{{ request.base_url }}url/{{ url.shorturl }}</span>
+    <span>{{ request.base_url }}u/{{ url.shorturl }}</span>
     <button type="button"
             class="icon-btn"
             title="Copy"
             onclick="copyToClipboard('{{ request.base_url }}url/{{ url.shorturl }}', this)">
       &#10697;
     </button>
+  </td>
+  <td class="cell-linkusername">
+    <span>
+  {% if url.link_username %}
+    {{ request.base_url }}u/{{ url.link_username }}
+  {% else %} -
+  {% endif %}
+</span>
+    {% if url.link_username %}
+    <button type="button"
+            class="icon-btn"
+            title="Copy"
+            onclick="copyToClipboard('{{ request.base_url }}url/{{ url.link_username }}', this)">
+      &#10697;
+    </button>
+    {% endif %}
   </td>
   <td class="cell-actions">
     <button class="btn btn-pill btn-danger"

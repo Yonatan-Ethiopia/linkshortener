@@ -1,13 +1,53 @@
 <div id="create-link-modal" class="modal-overlay hidden">
   <div class="modal-card">
     <h2>Shorten New Link</h2>
-    <form hx-post="/create" hx-target="this" hx-swap="none" hx-disabled-elt="find button">
+    
+    <form 
+      hx-post="/create" 
+      hx-target="this" 
+      hx-swap="innerHTML" 
+      hx-disabled-elt="#submit-btn"
+      hx-on::response-error="const err = JSON.parse(event.detail.xhr.responseText); document.getElementById('form-error').textContent = err.detail || 'An error occurred';"
+    >
+      <!-- Long URL Input -->
       <label for="fullurl">Enter Long URL...</label>
-      <input type="url" id="fullurl" name="fullurl" placeholder="https://example.com/very-long-url..." required>
-      <button type="submit" class="btn btn-accent btn-pill btn-block">
+<input 
+        type="url" 
+        id="fullurl" 
+        name="fullurl" 
+        placeholder="https://example.com/very-long-url..." 
+        required
+        oninput="const btn = document.getElementById('submit-btn'); btn.disabled = !this.value.trim() || btn.dataset.usernameTaken === 'true';"
+      >
+      
+      <!-- Custom Username Input -->
+      <label for="link_username" style="margin-top: 12px; display: block;">Custom Identifier (Optional)</label>
+      <input 
+  type="text" 
+  id="link_username" 
+  name="link_username" 
+  placeholder="e.g. my-custom-link"
+  hx-get="/username/check" 
+  hx-trigger="keyup changed delay:400ms" 
+  hx-target="#username-feedback"
+  hx-swap="innerHTML"
+  hx-disabled-elt="unset"
+  hx-on::keydown="document.getElementById('submit-btn').disabled = true"
+  hx-on:username-available="document.getElementById('submit-btn').disabled = false"
+  hx-on:username-taken="document.getElementById('submit-btn').disabled = true"
+  autocomplete="off"
+>
+      <!-- Real-time feedback appears here (as they type) -->
+      <div id="username-feedback" style="font-size: 0.85rem; margin-top: 4px; min-height: 20px;"></div>
+
+      <!-- Submission error message appears here -->
+      <div id="form-error" style="color: #ef4444; font-size: 0.85rem; margin-bottom: 10px;"></div>
+
+      <button id="submit-btn" type="submit" class="btn btn-accent btn-pill btn-block" disabled>
         <span>Shorten URL</span>
         <span class="htmx-indicator spinner"></span>
       </button>
+      
       <div class="modal-cancel">
         <button type="button" class="btn-link" onclick="closeModal('create-link-modal')">Cancel</button>
       </div>

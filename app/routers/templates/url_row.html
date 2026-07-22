@@ -12,6 +12,21 @@
       &#10697;
     </button>
   </td>
+  <td class="cell-linkusername">
+<span>
+  {% if url.link_username is not none %}
+       -
+  {% else %}
+    -
+  {% endif %}
+</span>
+    <button type="button"
+            class="icon-btn"
+            title="Copy"
+            onclick="copyToClipboard('{{ request.base_url }}url/{{ url.shorturl }}', this)">
+      &#10697;
+    </button>
+  </td>
   <td class="cell-actions">
     <button class="btn btn-pill btn-danger"
             hx-delete="/delete/{{ url.id }}"

@@ -8,6 +8,9 @@ from .models import *
 import redis,os
 from dotenv import load_dotenv
 from .db import redis_client
+from .internals.encoders import encode_to_base62, decode_from_base62
+
+MAX_INT32 = 2_147_483_647
 
 def get_session():
     with Session(engine) as session:
@@ -61,4 +64,25 @@ def rate_limit(key: str, limit: int, window_size: int)-> bool:
         redis_client.expire(key, window_size)
     print(f"{key} is at their {current} th request")
     return current < limit
+    
+    
+def does_username_exist(link_username: str)-> bool:
+    session = next(get_session())
+    found_username = session.exec(select(UrlDb).where(UrlDb.link_username == link_username)).first()
+    found_id = decode_from_base62(link_username)
+    if found_id > MAX_INT32 or found_id < 1:
+        found_id = None
+    found_id = session.get(UrlDb, found_id)
+    if found_username is None and found_id is None:
+        return False
+    return True
+    
+def does_hash_exist( curr_id: int):
+    session = next(get_session())
+    hashed_id = encode_to_base62(curr_id)
+    found_username = session.exec(select(UrlDb).where(UrlDb.link_username == hashed_id)).first()
+    if found_username is None:
+        return hashed_id
+    return None
+    
     
