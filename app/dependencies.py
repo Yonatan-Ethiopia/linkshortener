@@ -86,3 +86,14 @@ def does_hash_exist( curr_id: int):
     return None
     
     
+def is_valid_link_username(username: str) -> bool:
+    if not username:
+        return False
+    if len(username) > 15:
+        return False
+    return username.isalnum()
+    
+def normalize_link_username(username: str) -> str:
+    return username.strip().lower()
+    
+    

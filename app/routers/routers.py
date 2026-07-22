@@ -6,7 +6,7 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.schema import Sequence
 
 
-from ..dependencies import get_session, get_current_user, normalize_url, auth_rate_limit, create_rate_limit, does_username_exist
+from ..dependencies import get_session, get_current_user, normalize_url, auth_rate_limit, create_rate_limit, does_username_exist, is_valid_link_username
 from ..internals.encoders import encode_to_base62, decode_from_base62
 from ..models import *
 from ..handlers.create import create_link
@@ -143,11 +143,17 @@ def check_link_username(link_username: str = "", session: Session = Depends(get_
         content='<span style="color: #22c55e;"></span>',
         headers={"HX-Trigger": "usernameAvailable"},
     )
+    if not is_valid_link_username(link_username):
+        return HTMLResponse(
+            content='<span style="color: #ef4444;">username should only be alphanumeric and not longer then 15 chars</span>',
+            headers={"HX-Trigger": "usernameTaken"},
+        )
     if does_username_exist(link_username):
         return HTMLResponse(
             content='<span style="color: #ef4444;">username already taken</span>',
             headers={"HX-Trigger": "usernameTaken"},
         )
+    
     return HTMLResponse(
         content='<span style="color: #22c55e;">username available!</span>',
         headers={"HX-Trigger": "usernameAvailable"},
