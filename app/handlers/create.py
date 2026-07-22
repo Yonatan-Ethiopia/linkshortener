@@ -6,7 +6,7 @@ from typing import Annotated
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.schema import Sequence
 
-from ..dependencies import get_session, get_current_user, normalize_url, auth_rate_limit, create_rate_limit, does_hash_exist, does_username_exist, normalize_link_username
+from ..dependencies import get_session, get_current_user, normalize_url, auth_rate_limit, create_rate_limit, does_hash_exist, does_username_exist, normalize_link_username, is_valid_link_username
 from ..internals.encoders import encode_to_base62, decode_from_base62
 from ..models import *
 from ..db import engine
@@ -29,6 +29,8 @@ def create_link(request: Request, curr_user: currUser, url: UrlReqCreate):
                     url.link_username = None
                 if url.link_username is not None:
                     url.link_username = normalize_link_username(url.link_username)
+                    if not is_valid_link_username(url.link_username):
+                        raise HTTPException(status_code=421, detail = "Invalid username type")
                     if does_username_exist(url.link_username):
                         raise HTTPException(status_code=421, detail = "Username already exists")
                     new_id = session.exec(text("SELECT nextval('urldb_id_seq')")).first()
