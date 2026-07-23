@@ -41,6 +41,8 @@ def create(request:Request,  curr_user: Annotated[currUser, Depends(get_current_
 @router.get("/url/{shortened_link}", response_class = RedirectResponse)
 def redirect_to_full_url( shortened_link: str, session: Annotated[Session, Depends(get_session)]):
     url_id = decode_from_base62(shortened_link)
+    if url_id is None:
+        raise HTTPException(status_code=404, detail="Link not found")
     if url_id > MAX_INT32 or url_id < 1:
         full_url_from_link_username = session.exec(select(UrlDb).where(UrlDb.link_username == shortened_link)).first()
         if full_url_from_link_username is not None:
@@ -64,6 +66,8 @@ def redirect_to_full_url( shortened_link: str, session: Annotated[Session, Depen
 @router.get("/u/{shortened_link}", response_class = RedirectResponse)
 def redirect_to_full_url( shortened_link: str, session: Annotated[Session, Depends(get_session)]):
     url_id = decode_from_base62(shortened_link)
+    if url_id is None:
+        raise HTTPException(status_code=404, detail="Link not found")
     if url_id > MAX_INT32 or url_id < 1:
         full_url_from_link_username = session.exec(select(UrlDb).where(UrlDb.link_username == shortened_link)).first()
         if full_url_from_link_username is not None:
@@ -96,7 +100,7 @@ def user_dashboard( request: Request, session: Annotated[Session, Depends(get_se
         url_data.append(UrlRes.model_validate(url))
     urls_dict = { "urls": url_data }
     print("IN dashboard")
-    print(url_db[0])
+
     return templates.TemplateResponse(
     request=request,
     name="dashboard.html",
