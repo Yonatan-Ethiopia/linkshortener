@@ -44,6 +44,7 @@ def redirect_to_full_url( shortened_link: str, session: Annotated[Session, Depen
     if url_id is None:
         raise HTTPException(status_code=404, detail="Link not found")
     if url_id > MAX_INT32 or url_id < 1:
+        shortened_link = shortened_link.strip().lower()
         full_url_from_link_username = session.exec(select(UrlDb).where(UrlDb.link_username == shortened_link)).first()
         if full_url_from_link_username is not None:
             print(full_url_from_link_username)
@@ -69,6 +70,7 @@ def redirect_to_full_url( shortened_link: str, session: Annotated[Session, Depen
     if url_id is None:
         raise HTTPException(status_code=404, detail="Link not found")
     if url_id > MAX_INT32 or url_id < 1:
+        shortened_link = shortened_link.strip().lower()
         full_url_from_link_username = session.exec(select(UrlDb).where(UrlDb.link_username == shortened_link)).first()
         if full_url_from_link_username is not None:
             print(full_url_from_link_username)
