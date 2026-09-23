@@ -4,6 +4,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 database_url = os.getenv("DATABASE_URL", "fg")
+if database_url  and database_url .startswith("postgres://"):
+    database_url = database_url .replace("postgres://", "postgresql://", 1)
 redis_url = os.getenv("REDIS_URL","")
 
 sql_name = "database.db"
