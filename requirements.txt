@@ -8,3 +8,4 @@ authlib
 jinja2
 alembic
 psycopg2-binary
+itsdangerous
