@@ -1,2 +1,2 @@
-## Check out the working version at [tnylinks.me](https://tnylinks.ethiodeploy.com)
+## Check out the working version at [tnylinks.ethiodeploy.com](https://tnylinks.ethiodeploy.com)
 
