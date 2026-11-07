@@ -1,4 +1,3 @@
-fastapi
 uvicorn[standard]
 fastapi[standard]
 sqlmodel
@@ -7,5 +6,5 @@ redis
 authlib
 jinja2
 alembic
-psycopg2-binary
+psycopg[binary]
 itsdangerous
